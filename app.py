@@ -10,7 +10,7 @@ st.subheader("Turn confusing STEM topics into easy flashcards!")
 # 2. User Input
 user_concept = st.text_input("What STEM topic are you studying today?", placeholder="e.g., Photosynthesis, Gravity, Mitosis")
 
-# 3. Fixed AI Logic Function
+# 3. Upgraded Robust AI Logic Function
 def ask_ai(prompt_type, topic):
     base_url = "https://text.pollinations.ai/"
     
@@ -22,17 +22,25 @@ def ask_ai(prompt_type, topic):
         system_prompt = f"Create a short 3-question multiple-choice quiz about '{topic}' with options A, B, C. Provide the correct answers at the very bottom."
 
     try:
-        # Safely encode the prompt so the web browser can read spaces and emojis
+        # Safely encode the prompt so spaces and special characters are valid url characters
         encoded_prompt = urllib.parse.quote(system_prompt)
         full_url = f"{base_url}{encoded_prompt}"
         
-        # Make the secure request using built-in tools
-        req = urllib.request.Request(full_url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=15) as response:
+        # We add clear headers so the AI endpoint accepts the web request from Streamlit's server
+        req = urllib.request.Request(
+            full_url, 
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
+        )
+        
+        # Open connection and grab response
+        with urllib.request.urlopen(req, timeout=10) as response:
             return response.read().decode('utf-8')
             
     except Exception as e:
-        return f"Connection error: Try clicking the button again!"
+        # If something drops, we give a friendly message
+        return "The AI buddy is a bit busy right now. Please try clicking the button again!"
 
 # 4. Action Button Logic
 if st.button("✨ Create My Flashcards"):
