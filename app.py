@@ -1,5 +1,6 @@
 import streamlit as st
-import httpx
+import urllib.request
+import urllib.parse
 
 # 1. Page Configuration
 st.set_page_config(page_title="AI Flashcard Buddy", page_icon="🧠", layout="centered")
@@ -9,10 +10,9 @@ st.subheader("Turn confusing STEM topics into easy flashcards!")
 # 2. User Input
 user_concept = st.text_input("What STEM topic are you studying today?", placeholder="e.g., Photosynthesis, Gravity, Mitosis")
 
-# 3. AI Logic Function
+# 3. Fixed AI Logic Function
 def ask_ai(prompt_type, topic):
-    # We use a completely free text generation API endpoint
-    url = "https://text.pollinations.ai/"
+    base_url = "https://text.pollinations.ai/"
     
     if prompt_type == "kid":
         system_prompt = f"Explain the STEM concept '{topic}' like I am a 5-year-old child. Use simple words, analogies, and emojis. Keep it short."
@@ -22,14 +22,17 @@ def ask_ai(prompt_type, topic):
         system_prompt = f"Create a short 3-question multiple-choice quiz about '{topic}' with options A, B, C. Provide the correct answers at the very bottom."
 
     try:
-        # Sending the request to the free AI server
-        response = httpx.get(f"{url}{system_prompt}")
-        if response.status_code == 200:
-            return response.text
-        else:
-            return "Oops! The AI buddy is taking a nap. Try clicking the button again!"
+        # Safely encode the prompt so the web browser can read spaces and emojis
+        encoded_prompt = urllib.parse.quote(system_prompt)
+        full_url = f"{base_url}{encoded_prompt}"
+        
+        # Make the secure request using built-in tools
+        req = urllib.request.Request(full_url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return response.read().decode('utf-8')
+            
     except Exception as e:
-        return "Connection error. Please try again!"
+        return f"Connection error: Try clicking the button again!"
 
 # 4. Action Button Logic
 if st.button("✨ Create My Flashcards"):
